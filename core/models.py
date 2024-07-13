@@ -55,7 +55,13 @@ class Customer(models.Model):
 
 class Product(models.Model):
     product_name = models.CharField(max_length=50, blank=False)
+    logo_filename = models.CharField(max_length=100, blank=True, null=True)
     product_cost = models.IntegerField()
+
+    def save(self, *args, **kwargs):
+        if not self.logo_filename:
+            self.logo_filename = generate_logo_filename(self.product_name)
+        super().save(*args, **kwargs)
     
 
     def __str__(self):
@@ -74,15 +80,11 @@ class Sell(models.Model):
     product_owner = models.CharField(max_length=10, validators=[validate_iranian_national_id])
     product = models.ForeignKey(Product, on_delete=models.CASCADE, db_column='product')
     buy_date = models.DateField(auto_now_add=True)
-    sell_costs = models.IntegerField()
     
 
     def __str__(self):
         return f"Sell for {self.product_owner}  on {self.buy_date}"
     
-    @classmethod
-    def get_by_mobile(cls, mobile):
-        return cls.objects.filter(mobile=mobile)
     
 
 

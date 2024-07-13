@@ -57,7 +57,7 @@ def send_sms(to, text):
 def serve_logo(request, product_id):
     try:
         product = Product.objects.get(pk=product_id)
-        if product.name:
+        if product.product_name:
             file_path = os.path.join(settings.BASE_DIR, 'static', product.logo_filename)
             if os.path.exists(file_path):
                 return FileResponse(open(file_path, 'rb'), content_type='image/png')

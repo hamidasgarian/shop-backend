@@ -304,7 +304,73 @@ class tools(viewsets.ViewSet):
 
                 
 class sell_view(viewsets.ViewSet):
-    pass
+    queryset = Sell.objects.all()
+    serializer_class = SellSerializer
+
+    @action(detail=False, methods=['get'], url_path='all_sells_by_user/(?P<national_id>[^/.]+)')
+    def all_sells_by_user(self, request, national_id=None):
+        if not national_id:
+            return Response({"error": "National ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        sells = Sell.objects.filter(product_owner=national_id)
+        serializer = SellSerializer(sells, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'], url_path='all_sells_by_user_detail/(?P<national_id>[^/.]+)')
+    def all_sells_by_user_detail(self, request, national_id=None):
+        if not national_id:
+            return Response({"error": "National ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        sells = Sell.objects.filter(product_owner=national_id)
+        sell_list = []
+        
+        for sell in sells:
+            product = sell.product
+            sell_data = SellSerializer(sell).data
+            sell_data['product_name'] = product.product_name  
+            sell_data['product_costs'] = product.product_cost  
+            del sell_data['product']  
+            sell_list.append(sell_data)
+        
+        return Response(sell_list, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'], url_path='all_sells')
+    def all_sells(self, request):
+        sells = Sell.objects.all()
+        serializer = SellSerializer(sells, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['get'], url_path='all_sells_details')
+    def all_sells_details(self, request):
+        sells = Sell.objects.all()
+        sell_list = []
+        
+        for sell in sells:
+            product = sell.product
+            sell_data = SellSerializer(sell).data
+            sell_data['product_name'] = product.product_name 
+            sell_data['product_costs'] = product.product_cost
+            del sell_data['product']
+            sell_list.append(sell_data)
+        
+        return Response(sell_list, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['post'], url_path='buy_product/(?P<product_owner>[^/.]+)/(?P<product_id>[^/.]+)')
+    def buy_product(self, request, product_owner=None, product_id=None):
+        
+        if not product_owner or not product_id:
+            return Response({"error": "All fields (product_owner, product, sell_costs) are required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        sell = Sell(product_owner=product_owner, product=product)
+        sell.save()
+
+        serializer = SellSerializer(sell)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
         
         
 

@@ -53,7 +53,8 @@ def role(data):
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = '__all__'
+        exclude = ['logo_filename']
+        # fields = '__all__'
 
 def product(data):
     serializer = ProductSerializer(data=data)
