@@ -54,16 +54,33 @@ def send_sms(to, text):
     else:
         print(f"Failed to send message. Status code: {response.status_code}, Response: {response.text}")
 
-def serve_logo(request, product_id):
+    
+def serve_category_logo(request, category_id):
+    try:
+        category = Category.objects.get(pk=category_id)
+        if category.category_name:
+            file_path = os.path.join(settings.BASE_DIR, 'static', category.category_name)
+            file_extension = ".png"
+            absolute_file_address = file_path + file_extension
+            if os.path.exists(absolute_file_address):
+                return FileResponse(open(absolute_file_address, 'rb'), content_type='image/png')
+        raise Http404("Logo not found.")
+    except Category.DoesNotExist:
+        raise Http404("category not found.")
+    
+def serve_product_logo(request, product_id):
     try:
         product = Product.objects.get(pk=product_id)
+        product_suffix = "p" + str(product_id)
         if product.product_name:
-            file_path = os.path.join(settings.BASE_DIR, 'static', product.logo_filename)
-            if os.path.exists(file_path):
-                return FileResponse(open(file_path, 'rb'), content_type='image/png')
+            file_path = os.path.join(settings.BASE_DIR, 'static', product_suffix)
+            file_extension = ".png"
+            absolute_file_address = file_path + file_extension
+            if os.path.exists(absolute_file_address):
+                return FileResponse(open(absolute_file_address, 'rb'), content_type='image/png')
         raise Http404("Logo not found.")
     except Product.DoesNotExist:
-        raise Http404("product not found.")
+        raise Http404("category not found.")
 
 
 def serve_slider(request, filename):

@@ -31,6 +31,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('api/v1/', include('core.urls')),
-    path('product/logo/<int:product_id>/', serve_logo, name='serve_logo'),
+    path('product/logo/<int:product_id>/', serve_product_logo, name='serve_product_logo'),
+    path('category/logo/<int:category_id>/', serve_category_logo, name='serve_category_logo'),
     path('slider/<str:filename>/', serve_slider, name='serve_slider'), 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

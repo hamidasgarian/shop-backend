@@ -50,10 +50,123 @@ def role(data):
         print(errors)
         return errors
     
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = '__all__'
+
+def category(data):
+    serializer = CategorySerializer(data=data)
+
+    if serializer.is_valid():
+        instance = serializer.save()
+        return instance
+    else:
+        errors = serializer.errors
+        print(errors)
+        return errors
+    
+class GroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = '__all__'
+
+def group(data):
+    serializer = GroupSerializer(data=data)
+
+    if serializer.is_valid():
+        instance = serializer.save()
+        return instance
+    else:
+        errors = serializer.errors
+        print(errors)
+        return errors
+    
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = '__all__'
+
+def comment(data):
+    serializer = CommentSerializer(data=data)
+
+    if serializer.is_valid():
+        instance = serializer.save()
+        return instance
+    else:
+        errors = serializer.errors
+        print(errors)
+        return errors
+    
+class InvestigationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Investigation
+        fields = '__all__'
+
+def investigation(data):
+    serializer = InvestigationSerializer(data=data)
+
+    if serializer.is_valid():
+        instance = serializer.save()
+        return instance
+    else:
+        errors = serializer.errors
+        print(errors)
+        return errors
+    
+class QuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = '__all__'
+
+def question(data):
+    serializer = QuestionSerializer(data=data)
+
+    if serializer.is_valid():
+        instance = serializer.save()
+        return instance
+    else:
+        errors = serializer.errors
+        print(errors)
+        return errors
+    
+class IntroductionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Introduction
+        fields = '__all__'
+
+def introduction(data):
+    serializer = IntroductionSerializer(data=data)
+
+    if serializer.is_valid():
+        instance = serializer.save()
+        return instance
+    else:
+        errors = serializer.errors
+        print(errors)
+        return errors
+    
+class SpecificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Specification
+        fields = '__all__'
+
+def specification(data):
+    serializer = SpecificationSerializer(data=data)
+
+    if serializer.is_valid():
+        instance = serializer.save()
+        return instance
+    else:
+        errors = serializer.errors
+        print(errors)
+        return errors
+    
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        exclude = ['logo_filename']
+        # exclude = ['logo_filename', 'product_stars']
+        exclude = ['product_stars']
         # fields = '__all__'
 
 def product(data):
