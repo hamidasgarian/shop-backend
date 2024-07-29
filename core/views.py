@@ -529,7 +529,64 @@ class group_view(viewsets.ModelViewSet):
             return JsonResponse({'ERROR': err[0]}, status=err[1])
 
 
+
 class user_view(viewsets.ModelViewSet):
+
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    # pagination_class = CustomPagination
+    # permission_classes = [permissions.IsAuthenticated, SisaAdmin]
+
+    def list(self, request, *args, **kwargs):
+        try:
+            return super().list(request, *args, **kwargs)
+        except Exception as e:
+            err = handle_exception(get_current_class_name(), get_current_action_name())
+            return JsonResponse({'ERROR': err[0]}, status=err[1])
+    
+    def create(self, request, *args, **kwargs):
+        try:
+            serializer = UserSerializer(data=request.data)
+            if serializer.is_valid():
+                user_instance = serializer.save()
+                return Response(UserSerializer(user_instance).data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(e)
+            err = handle_exception(get_current_class_name(), get_current_action_name())
+            return JsonResponse({'ERROR': err[0]}, status=err[1])
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            return super().retrieve(request, *args, **kwargs)
+        except Exception as e:
+            err = handle_exception(get_current_class_name(), get_current_action_name())
+            return JsonResponse({'ERROR': err[0]}, status=err[1])
+
+    def update(self, request, *args, **kwargs):
+        try:
+            return super().update(request, *args, **kwargs)
+        except Exception as e:
+            err = handle_exception(get_current_class_name(), get_current_action_name())
+            return JsonResponse({'ERROR': err[0]}, status=err[1])
+
+    def partial_update(self, request, *args, **kwargs):
+        try:
+            return super().partial_update(request, *args, **kwargs)
+        except Exception as e:
+            err = handle_exception(get_current_class_name(), get_current_action_name())
+            return JsonResponse({'ERROR': err[0]}, status=err[1])
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except Exception as e:
+            err = handle_exception(get_current_class_name(), get_current_action_name())
+            return JsonResponse({'ERROR': err[0]}, status=err[1])
+
+
+class customer_view(viewsets.ModelViewSet):
 
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
