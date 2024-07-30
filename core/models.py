@@ -51,10 +51,29 @@ class Customer(models.Model):
     
     
 class Category(models.Model):
-    category_name = models.CharField(max_length=50, blank=False)
+    name = models.CharField(max_length=100, unique=True)
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.category_name
+        return self.name
+    
+    def get_ancestors(self):
+        if self.parent:
+            return self.parent.get_ancestors() + [self.parent]
+        else:
+            return []
+
+    def get_full_path_list(self):
+        return [ancestor.name for ancestor in self.get_ancestors()] + [self.name]
+
+    def get_descendants(self, include_self=False):
+        descendants = []
+        children = Category.objects.filter(parent=self)
+        for child in children:
+            descendants.extend(child.get_descendants(include_self=True))
+        if include_self:
+            descendants.append(self)
+        return descendants
 
 class Group(models.Model):
     group_name = models.CharField(max_length=50, blank=False)
@@ -65,18 +84,23 @@ class Group(models.Model):
 
 
 class Product(models.Model):
-    product_name = models.CharField(max_length=50, blank=False)
-    product_cost = models.IntegerField()
-    product_description  = models.CharField(max_length=150, blank=False)
-    product_stars = models.PositiveSmallIntegerField(default=0)
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, db_column='group')
+    name = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    discount = models.DecimalField(max_digits=5, decimal_places=2)
+    brand = models.CharField(max_length=100)
+    description = models.CharField(max_length=500, blank=True)
+    stars = models.IntegerField(null=True, blank=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, db_column='category')
+    created_date = models.DateTimeField(auto_now_add=True)
+    details = models.JSONField()
+    images = models.JSONField(default=list)
 
     def __str__(self):
-        return self.product_name
+        return self.name
     
     @classmethod
     def search_by_name(cls, search_term):
-        return cls.objects.filter(product_name__icontains=search_term)
+        return cls.objects.filter(name__icontains=search_term)
  
     
 

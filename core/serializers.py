@@ -55,16 +55,16 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = '__all__'
 
-def category(data):
-    serializer = CategorySerializer(data=data)
+# def category(data):
+#     serializer = CategorySerializer(data=data)
 
-    if serializer.is_valid():
-        instance = serializer.save()
-        return instance
-    else:
-        errors = serializer.errors
-        print(errors)
-        return errors
+#     if serializer.is_valid():
+#         instance = serializer.save()
+#         return instance
+#     else:
+#         errors = serializer.errors
+#         print(errors)
+#         return errors
     
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
@@ -163,22 +163,17 @@ def specification(data):
         return errors
     
 class ProductSerializer(serializers.ModelSerializer):
+    
+    category = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
-        # exclude = ['logo_filename', 'product_stars']
-        exclude = ['product_stars']
         # fields = '__all__'
+        exclude = ['created_date']
 
-def product(data):
-    serializer = ProductSerializer(data=data)
-
-    if serializer.is_valid():
-        team_instance = serializer.save()
-        return team_instance
-    else:
-        errors = serializer.errors
-        print(errors)
-        return errors
+    def get_category(self, obj):
+        return obj.category.get_full_path_list() if obj.category else []
+        
     
     
 class SellSerializer(serializers.ModelSerializer):

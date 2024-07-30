@@ -72,7 +72,7 @@ def serve_product_logo(request, product_id):
     try:
         product = Product.objects.get(pk=product_id)
         product_suffix = "p" + str(product_id)
-        if product.product_name:
+        if product.name:
             file_path = os.path.join(settings.BASE_DIR, 'static', product_suffix)
             file_extension = ".png"
             absolute_file_address = file_path + file_extension
@@ -81,6 +81,21 @@ def serve_product_logo(request, product_id):
         raise Http404("Logo not found.")
     except Product.DoesNotExist:
         raise Http404("category not found.")
+    
+def serve_product_image(request, product_id, image_id):
+    try:
+        product = Product.objects.get(pk=product_id)
+        
+        product_suffix = f"{product_id}-pic{image_id}.png"
+        file_path = os.path.join(settings.BASE_DIR, 'static', product_suffix)
+        
+        if os.path.exists(file_path):
+            return FileResponse(open(file_path, 'rb'), content_type='image/png')
+        else:
+            raise Http404("Image not found.")
+    
+    except Product.DoesNotExist:
+        raise Http404("Product not found.")
 
 
 def serve_slider(request, filename):

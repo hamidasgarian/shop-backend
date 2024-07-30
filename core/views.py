@@ -7,25 +7,6 @@ import uuid
 import threading
 import time
 
-import qrcode
-from qrcode.image.styledpil import StyledPilImage
-from qrcode.image.styles.moduledrawers.pil import GappedSquareModuleDrawer
-from qrcode.image.styles.colormasks import RadialGradiantColorMask
-
-from io import BytesIO
-from PIL import Image
-
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.units import cm
-
-
-import arabic_reshaper
-from bidi.algorithm import get_display
-
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth import get_user_model
@@ -35,6 +16,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError
+from django.shortcuts import get_object_or_404
 
 
 from rest_framework.decorators import action
@@ -120,11 +102,14 @@ class advance_view(viewsets.ViewSet):
             product_list = [
                 {
                     'id': product.id,
-                    'product_name': product.product_name,
-                    'product_cost': product.product_cost,
-                    'product_description': product.product_description,
-                    'product_stars': product.product_stars,
-                    'group_id': product.group_id
+                    'name': product.name,
+                    'price': product.price,
+                    'discount': product.discount,
+                    'brand': product.brand,
+                    'description': product.description,
+                    'stars': product.stars,
+                    'details': product.details,
+                    'created_date': product.created_date
                 } 
                 for product in products
             ]
@@ -423,53 +408,72 @@ class category_view(viewsets.ModelViewSet):
     # pagination_class = CustomPagination
     # permission_classes = [permissions.IsAuthenticated, SisaAdmin]
 
-    def list(self, request, *args, **kwargs):
-        try:
-            return super().list(request, *args, **kwargs)
-        except Exception as e:
-            err = handle_exception(get_current_class_name(), get_current_action_name())
-            return JsonResponse({'ERROR': err[0]}, status=err[1])
+    # def list(self, request, *args, **kwargs):
+    #     try:
+    #         return super().list(request, *args, **kwargs)
+    #     except Exception as e:
+    #         err = handle_exception(get_current_class_name(), get_current_action_name())
+    #         return JsonResponse({'ERROR': err[0]}, status=err[1])
     
-    def create(self, request, *args, **kwargs):
-        try:
-            serializer = CategorySerializer(data=request.data)
-            if serializer.is_valid():
-                user_instance = serializer.save()
-                return Response(CategorySerializer(user_instance).data, status=status.HTTP_201_CREATED)
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            print(e)
-            err = handle_exception(get_current_class_name(), get_current_action_name())
-            return JsonResponse({'ERROR': err[0]}, status=err[1])
+    # def create(self, request, *args, **kwargs):
+    #     try:
+    #         serializer = CategorySerializer(data=request.data)
+    #         if serializer.is_valid():
+    #             user_instance = serializer.save()
+    #             return Response(CategorySerializer(user_instance).data, status=status.HTTP_201_CREATED)
+    #         else:
+    #             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    #     except Exception as e:
+    #         print(e)
+    #         err = handle_exception(get_current_class_name(), get_current_action_name())
+    #         return JsonResponse({'ERROR': err[0]}, status=err[1])
 
-    def retrieve(self, request, *args, **kwargs):
-        try:
-            return super().retrieve(request, *args, **kwargs)
-        except Exception as e:
-            err = handle_exception(get_current_class_name(), get_current_action_name())
-            return JsonResponse({'ERROR': err[0]}, status=err[1])
+    # def retrieve(self, request, *args, **kwargs):
+    #     try:
+    #         return super().retrieve(request, *args, **kwargs)
+    #     except Exception as e:
+    #         err = handle_exception(get_current_class_name(), get_current_action_name())
+    #         return JsonResponse({'ERROR': err[0]}, status=err[1])
 
-    def update(self, request, *args, **kwargs):
-        try:
-            return super().update(request, *args, **kwargs)
-        except Exception as e:
-            err = handle_exception(get_current_class_name(), get_current_action_name())
-            return JsonResponse({'ERROR': err[0]}, status=err[1])
+    # def update(self, request, *args, **kwargs):
+    #     try:
+    #         return super().update(request, *args, **kwargs)
+    #     except Exception as e:
+    #         err = handle_exception(get_current_class_name(), get_current_action_name())
+    #         return JsonResponse({'ERROR': err[0]}, status=err[1])
 
-    def partial_update(self, request, *args, **kwargs):
-        try:
-            return super().partial_update(request, *args, **kwargs)
-        except Exception as e:
-            err = handle_exception(get_current_class_name(), get_current_action_name())
-            return JsonResponse({'ERROR': err[0]}, status=err[1])
+    # def partial_update(self, request, *args, **kwargs):
+    #     try:
+    #         return super().partial_update(request, *args, **kwargs)
+    #     except Exception as e:
+    #         err = handle_exception(get_current_class_name(), get_current_action_name())
+    #         return JsonResponse({'ERROR': err[0]}, status=err[1])
 
-    def destroy(self, request, *args, **kwargs):
-        try:
-            return super().destroy(request, *args, **kwargs)
-        except Exception as e:
-            err = handle_exception(get_current_class_name(), get_current_action_name())
-            return JsonResponse({'ERROR': err[0]}, status=err[1])
+    # def destroy(self, request, *args, **kwargs):
+    #     try:
+    #         return super().destroy(request, *args, **kwargs)
+    #     except Exception as e:
+    #         err = handle_exception(get_current_class_name(), get_current_action_name())
+    #         return JsonResponse({'ERROR': err[0]}, status=err[1])
+    def list(self, request):
+        top_level_categories = Category.objects.filter(parent__isnull=True)
+        serializer = CategorySerializer(top_level_categories, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='(?P<parent_category>[^/.]+)')
+    def list_children(self, request, parent_category=None):
+        parent = get_object_or_404(Category, name=parent_category)
+        children = Category.objects.filter(parent=parent)
+        serializer = CategorySerializer(children, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='(?P<parent_category>[^/.]+)/(?P<child_category>[^/.]+)')
+    def list_subchildren(self, request, parent_category=None, child_category=None):
+        parent = get_object_or_404(Category, name=parent_category)
+        child = get_object_or_404(Category, name=child_category, parent=parent)
+        subchildren = Category.objects.filter(parent=child)
+        serializer = CategorySerializer(subchildren, many=True)
+        return Response(serializer.data)
 
 
 
@@ -705,59 +709,72 @@ class product_view(viewsets.ModelViewSet):
     # permission_classes = [permissions.IsAuthenticated, SisaAdmin]
 
     def list(self, request, *args, **kwargs):
-        try:
-            return super().list(request, *args, **kwargs)
-        except Exception as e:
-            err = handle_exception(get_current_class_name(), get_current_action_name())
-            return JsonResponse({'ERROR': err[0]}, status=err[1])
+        categories = kwargs.get('categories', None)
+        if categories:
+            category_names = categories.split('/')
+            parent_category = get_object_or_404(Category, name=category_names[-1])
+            descendant_categories = parent_category.get_descendants(include_self=True)
+            products = Product.objects.filter(category__in=descendant_categories)
+        else:
+            products = Product.objects.all()
         
-    @action(detail=False, methods=['get'], url_path='count', url_name='count')
-    def count(self, request, *args, **kwargs):
-        try:
-            product_count = Product.objects.count()
-            return JsonResponse({'count': product_count})
-        except Exception as e:
-            return JsonResponse({'ERROR': str(e)}, status=500)
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
 
-    def create(self, request, *args, **kwargs):
-        try:
-            serializer = ProductSerializer(data=request.data)
-            if serializer.is_valid():
-                ticket_instance = serializer.save()
-                return Response(ProductSerializer(ticket_instance).data, status=status.HTTP_201_CREATED)
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            err = handle_exception(get_current_class_name(), get_current_action_name())
-            return JsonResponse({'ERROR': err[0]}, status=err[1])
+    
+    
+    def create(self, request):
+        data = request.data
+        serializer = ProductSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    # @action(detail=False, methods=['get'], url_path='(?P<categories>.+)')
+    # def by_category(self, request, categories=None):
+    #     if categories:
+    #         category_names = categories.split('/')
+    #         parent_category = get_object_or_404(Category, name=category_names[-1])
+    #         descendant_categories = parent_category.get_descendants(include_self=True)
+    #         products = Product.objects.filter(category__in=descendant_categories)
+    #     else:
+    #         products = Product.objects.all()
 
-    def retrieve(self, request, *args, **kwargs):
-        try:
-            return super().retrieve(request, *args, **kwargs)
-        except Exception as e:
-            err = handle_exception(get_current_class_name(), get_current_action_name())
-            return JsonResponse({'ERROR': err[0]}, status=err[1])
+    #     serializer = ProductSerializer(products, many=True)
+    #     return Response(serializer.data)
+    @action(detail=False, methods=['get'], url_path='(?P<categories>.+)')
+    def retrieve_or_list_by_category(self, request, categories=None):
+        if categories:
+            parts = categories.split('/')
 
-    def update(self, request, *args, **kwargs):
-        try:
-            return super().update(request, *args, **kwargs)
-        except Exception as e:
-            err = handle_exception(get_current_class_name(), get_current_action_name())
-            return JsonResponse({'ERROR': err[0]}, status=err[1])
+            # Check if the last part is an integer (product ID)
+            try:
+                product_id = int(parts[-1])
+                # Retrieve product by ID
+                product = get_object_or_404(Product, pk=product_id)
 
-    def partial_update(self, request, *args, **kwargs):
-        try:
-            return super().partial_update(request, *args, **kwargs)
-        except Exception as e:
-            err = handle_exception(get_current_class_name(), get_current_action_name())
-            return JsonResponse({'ERROR': err[0]}, status=err[1])
-
-    def destroy(self, request, *args, **kwargs):
-        try:
-            return super().destroy(request, *args, **kwargs)
-        except Exception as e:
-            err = handle_exception(get_current_class_name(), get_current_action_name())
-            return JsonResponse({'ERROR': err[0]}, status=err[1])
+                # Check if we should validate the category path
+                if len(parts) > 1:
+                    # Extract category path excluding the product ID
+                    category_names = parts[:-1]
+                    for name in category_names:
+                        # Check if each part of the path is a valid category
+                        parent_category = get_object_or_404(Category, name=name)
+                        if not (product.category in parent_category.get_descendants(include_self=True)):
+                            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+                
+                serializer = ProductSerializer(product)
+                return Response(serializer.data)
+            except ValueError:
+                # If the last part is not an integer, treat it as a category path
+                parent_category = get_object_or_404(Category, name=parts[-1])
+                descendant_categories = parent_category.get_descendants(include_self=True)
+                products = Product.objects.filter(category__in=descendant_categories)
+                serializer = ProductSerializer(products, many=True)
+                return Response(serializer.data)
+        
+        return Response({'detail': 'Invalid request.'}, status=status.HTTP_400_BAD_REQUEST)
 
         
 class tools(viewsets.ViewSet):
